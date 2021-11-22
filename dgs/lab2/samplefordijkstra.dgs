@@ -1,0 +1,20 @@
+DGS004
+dijkstra 0 0
+an a
+an b
+an c
+an d
+an e
+an f
+an g
+an h
+ae ab a b distance:3
+ae ac a c distance:1
+ae bd b d distance:2
+ae ce c e distance:1
+ae cd c d distance:6
+ae de d e distance:4
+ae df d f distance:3
+ae dg d g distance:2
+ae fh f h distance:2
+ae gh g h distance:5
