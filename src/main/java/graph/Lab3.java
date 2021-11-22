@@ -7,8 +7,9 @@ import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 
-import java.awt.Color;
-
+/**
+ * Class containg methods to solve lab 3
+ */
 public class Lab3 {
 
 	
@@ -34,12 +35,12 @@ public class Lab3 {
 			myGraph.addNode("0").addAttribute("ui.style", "fill-color: rgb(255," + (0) + ",0);size:10px;");//add a starting Node
 			
 		for (int i = 1; i < vertices; i++) {
-			Node nodeToAttach = Toolkit.randomNode(myGraph);
-			Node newNode = myGraph.addNode(i+"");
-			int g = (int)((i/(double)vertices)*255);
-			newNode.addAttribute("ui.style", "fill-color: rgb(" + (255-g) + ","+g+",0);size:10px;");
-			Edge edge = myGraph.addEdge(nodeToAttach.getId()+"_"+newNode.getId(), nodeToAttach, newNode, false);
-			Tools.pause(timeSpace);
+			Node nodeToAttach = Toolkit.randomNode(myGraph); // rand node to attach new node 
+			Node newNode = myGraph.addNode(i+""); // init new node
+			int g = (int)((i/(double)vertices)*255); // calculate color gradient 
+			newNode.addAttribute("ui.style", "fill-color: rgb(" + (255-g) + ","+g+",0);size:10px;");//set new color
+			Edge edge = myGraph.addEdge(nodeToAttach.getId()+"_"+newNode.getId(), nodeToAttach, newNode, false);//attach new node to alreadyexisting node 
+			Tools.pause(timeSpace);//make some some pause
 		}
 
 	}

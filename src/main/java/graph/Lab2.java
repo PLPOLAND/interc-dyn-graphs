@@ -16,6 +16,10 @@ import javax.sql.rowset.serial.SerialArray;
 import org.graphstream.algorithm.Toolkit;
 import org.graphstream.graph.Edge;
 
+
+/**
+ * Class containing methods which solves exercises from lab 2
+ */
 public class Lab2{
     static public SingleGraph myGraph;
 
@@ -26,16 +30,16 @@ public class Lab2{
      */
     public Lab2(String[] args) {
         myGraph = new SingleGraph("lab2 graph");
-        // ex1();
-        // ex2();
-        //ex3();
-        // exercise4Dijkstra();
-        exercise5();
-        // exercise6();
+        // ex1(); // uncomment to solve ex 1
+        // ex2(); // uncomment to solve ex 2
+        // ex3(); // uncomment to solve ex 3
+        // exercise4Dijkstra(); // uncomment to solve ex 4
+        exercise5(); // uncomment to solve ex 5
+        // exercise6(); // uncomment to solve ex 6
     }
 
     /**
-     * 
+     * Showing spanning trees
      */
     public void exercise6() {
         myGraph = Tools.read("dgs/lab2/gridvaluated_30_1:20.dgs");
@@ -78,7 +82,7 @@ public class Lab2{
         v.addAttribute("ui.style", "fill-color:#00ff00;size:10px;");
     }
     /**
-     * T
+     * Using dikstrja to calculate radius an diameter of graph
      */
     public void exercise5() {
         myGraph = Tools.read("dgs/lab2/gridvaluated_30_1:20.dgs");
@@ -133,8 +137,8 @@ public class Lab2{
                 tmp.removeAttribute("distance");
             }
         }
-        System.out.println("radius: "+radius);
-        System.out.println("diameter: "+diameter);
+        System.out.println("radius: "+radius);//just print info about radius
+        System.out.println("diameter: "+diameter);//just print info about diameter
 
         int diffrence = Math.abs(radius-diameter);
         for (Node node : myGraph.getEachNode()) {//set gradient
