@@ -32,7 +32,7 @@ public class Lab4 {
         random = new Random(System.currentTimeMillis());
 
         // ex1(100,0.1);
-        ex2(15,1,20,1);
+        ex2(15,4,20,100);
         
     }
 
@@ -46,9 +46,9 @@ public class Lab4 {
         myGraph = Tools.grid(n, false, true);
         myGraph.display(false);
         for (Node node : myGraph.getEachNode()) {
-            int r = random.nextInt(254);
-            int g = random.nextInt(254);
-            int b = random.nextInt(254);
+            int r = random.nextInt(255);
+            int g = random.nextInt(255);
+            int b = random.nextInt(255);
             node.addAttribute("ui.style", "fill-color: rgb("+r+","+g+","+b+");shape: box;size:"+boxSize+"px;");
             node.addAttribute("alive", 0);
             node.addAttribute("color", ""+r+","+g+","+b+"");
@@ -63,11 +63,6 @@ public class Lab4 {
         for (Ex2Entity ex2Entity : entity) {
             ex2Entity.start();
         }
-        // while (true) {
-        //     for (Ex2Entity ex2Entity : entity) {
-        //         ex2Entity.makeNext();
-        //     }
-        // }
 
     }
 
@@ -155,7 +150,7 @@ public class Lab4 {
 
 
 /**
- * ex2
+ * ex2 thread entity 
  */
 class Ex2Entity extends Thread{
     boolean kill = false;
@@ -198,19 +193,21 @@ class Ex2Entity extends Thread{
                                 Node currNode = neigh.next();
                                 String color = currNode.getAttribute("color");
                                 if (colors.containsKey(color)) {
-                                    colors.replace(color, colors.get(color) + 1);
+                                    colors.replace(color, colors.get(color) + 1);//increment amount of this color
                                 } else {
                                     colors.put(color, 1);// add new color to map;
                                 }
 
                             }
-
+                            //find the most popular color 
                             colors.forEach((color, val) -> {
                                 if (val > bestColorVal) {
                                     bestColorVal = val;
                                     bestColor = color;
                                 }
                             });
+
+
                             if (bestColorVal == 1) {// if there is no most color, just rand it;
                                 Random rand = new Random(System.currentTimeMillis());
                                 bestColor = (String) colors.keySet().toArray()[rand.nextInt(colors.size())];
@@ -218,7 +215,8 @@ class Ex2Entity extends Thread{
 
                             // set new color to neighbor
                             neigh = node.getNeighborNodeIterator();
-                            while (neigh.hasNext()) {// compute number of colors
+                            while (neigh.hasNext()) {// set new color
+
                                 if (lock.tryLock(10, TimeUnit.SECONDS)) {
                                 Node currNode = neigh.next();
                                     try {//TODO there is the problem with NoSuchElementException and with breaking viewer of graph...
@@ -255,6 +253,7 @@ class Ex2Entity extends Thread{
                                     }
                                 }
                             }
+
                             node.changeAttribute("color", bestColor);
                             node.setAttribute("ui.style", "fill-color:rgb(" + bestColor + ");");
 
