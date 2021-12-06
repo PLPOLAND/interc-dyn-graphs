@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.sql.rowset.serial.SerialArray;
 
 import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.view.Viewer;
 
 import scala.annotation.elidable;
 
@@ -26,13 +27,18 @@ public class Lab4 {
     Random random;
     static int boxSize = 10;
     static int sleepTime = 10;
+
+    static Integer iteration = 0;
+
+    static Viewer viewer;
+
     public Lab4(String[] args){
 
         // random = new Random(1);
         random = new Random(System.currentTimeMillis());
 
         // ex1(100,0.1);
-        ex2(15,4,20,100);
+        ex2(15,8*15,20,100);
         
     }
 
@@ -43,12 +49,18 @@ public class Lab4 {
 
         
 
-        myGraph = Tools.grid(n, false, true);
-        myGraph.display(false);
+        myGraph = Tools.grid(n, false, false);
+        viewer = myGraph.display(false);
         for (Node node : myGraph.getEachNode()) {
             int r = random.nextInt(255);
             int g = random.nextInt(255);
             int b = random.nextInt(255);
+
+            while (0.2126 * r + 0.7152 * g + 0.0722 * b > 220) {
+                r = random.nextInt(255);
+                g = random.nextInt(255);
+                b = random.nextInt(255);
+            }
             node.addAttribute("ui.style", "fill-color: rgb("+r+","+g+","+b+");shape: box;size:"+boxSize+"px;");
             node.addAttribute("alive", 0);
             node.addAttribute("color", ""+r+","+g+","+b+"");
@@ -63,7 +75,29 @@ public class Lab4 {
         for (Ex2Entity ex2Entity : entity) {
             ex2Entity.start();
         }
-
+        boolean isConsensus = false;
+        String consensusColor = "";
+        while (!isConsensus) {
+            consensusColor = Toolkit.randomNode(myGraph).getAttribute("color");
+            synchronized (myGraph) {
+                for (Node node : myGraph.getEachNode()) {
+                    if(consensusColor.equals(node.getAttribute("color"))){
+                        isConsensus = true;
+                    }
+                    else{
+                        isConsensus = false;
+                        break;
+                    }
+                }
+            }
+        }
+        System.out.println("Killing Nodes:");
+        System.out.flush();
+        for (Ex2Entity ex2Entity : entity) {
+            ex2Entity.kill = true;
+        }
+        Tools.pause(1000);
+        System.out.println("Consensus Approched after"+ iteration+" iterations");
     }
 
     //GAME_OF_LIFE
@@ -157,7 +191,7 @@ class Ex2Entity extends Thread{
 
     boolean makeNext = false;
 
-    SingleGraph graph;
+    static SingleGraph graph;
 
     HashMap<String,Integer> colors;
     
@@ -167,6 +201,7 @@ class Ex2Entity extends Thread{
     String bestColor = "";
     int bestColorVal = 0;
 
+    Random rand = new Random(System.currentTimeMillis());
     Ex2Entity(SingleGraph graph2){
         super();
         this.graph = graph2;
@@ -174,11 +209,15 @@ class Ex2Entity extends Thread{
 
     }
 
+
     public void run(){
         while (!kill) {
             try {
                 Tools.pause(Lab4.sleepTime);
                 // System.out.println("!kill");
+                synchronized(Lab4.iteration){
+                    Lab4.iteration++;
+                }
                 bestColor ="";
                 bestColorVal= 0;
                 // if (makeNext) {
@@ -187,11 +226,11 @@ class Ex2Entity extends Thread{
                     Node node = Toolkit.randomNode(graph);
                     if(lock.tryLock(10, TimeUnit.SECONDS)){
                         try {
-                            System.out.println(this.getName() + " startof :" + node.getId());
+                            // System.out.println(this.getName() + " startof :" + node.getId());
                             Iterator<Node> neigh = node.getNeighborNodeIterator();
                             while (neigh.hasNext()) {// compute number of colors
                                 Node currNode = neigh.next();
-                                String color = currNode.getAttribute("color");
+                                String color = getColorOfNode(currNode);
                                 if (colors.containsKey(color)) {
                                     colors.replace(color, colors.get(color) + 1);//increment amount of this color
                                 } else {
@@ -209,7 +248,7 @@ class Ex2Entity extends Thread{
 
 
                             if (bestColorVal == 1) {// if there is no most color, just rand it;
-                                Random rand = new Random(System.currentTimeMillis());
+                                
                                 bestColor = (String) colors.keySet().toArray()[rand.nextInt(colors.size())];
                             }
 
@@ -220,45 +259,27 @@ class Ex2Entity extends Thread{
                                 if (lock.tryLock(10, TimeUnit.SECONDS)) {
                                 Node currNode = neigh.next();
                                     try {//TODO there is the problem with NoSuchElementException and with breaking viewer of graph...
-                                        /**
-                                         * java.util.NoSuchElementException
-                                         * at java.util.LinkedList.removeFirst(LinkedList.java:270)
-                                         * at java.util.LinkedList.remove(LinkedList.java:685)
-                                         * at org.graphstream.stream.SourceBase.manageEvents(SourceBase.java:872)
-                                         * at
-                                         * org.graphstream.stream.SourceBase.sendAttributeChangedEvent(SourceBase.java:810)
-                                         * at
-                                         * org.graphstream.util.GraphListeners.sendAttributeChangedEvent(GraphListeners.java:73)
-                                         * at
-                                         * org.graphstream.graph.implementations.AbstractNode.attributeChanged(AbstractNode.java:94)
-                                         * at
-                                         * org.graphstream.graph.implementations.AbstractElement.addAttribute(AbstractElement.java:544)
-                                         * at
-                                         * org.graphstream.graph.implementations.AbstractElement.setAttribute(AbstractElement.java:560)
-                                         * at graph.Ex2Entity.run(Lab4.java:224)
-                                         */
-                                        currNode.setAttribute("color", bestColor);
-                                        currNode.setAttribute("ui.style", "fill-color: rgb(" + bestColor
-                                                + ");shape: box;size:" + Lab4.boxSize
-                                                + "px; stroke-mode: plain; stroke-width:1px; stroke-color:#000000;");
+                                        changeColorOfNode(currNode);
                                     } 
-                                    // catch(NoSuchElementException e){
-                                    //     e.printStackTrace();
-                                    //     graph.display(false);
-                                    //     currNode.removeAttribute("ui.style");
-                                    //     currNode.addAttribute("ui.style", "fill-color: rgb(" + bestColor+ ");shape: box;size:" + Lab4.boxSize+ "px; stroke-mode: plain; stroke-width:1px; stroke-color:#000000;");
-                                    // }
+                                    catch(NoSuchElementException e){
+                                        System.out.println("Error on " + this.getName());
+                                        System.out.flush();
+                                        e.printStackTrace();
+                                        System.exit(-1);
+                                        // graph.display(false);
+                                        // currNode.removeAttribute("ui.style");
+                                        // currNode.addAttribute("ui.style", "fill-color: rgb(" + bestColor+ ");shape: box;size:" + Lab4.boxSize+ "px; stroke-mode: plain; stroke-width:1px; stroke-color:#000000;");
+                                    }
                                     finally{
                                         lock.unlock();
                                     }
                                 }
                             }
 
-                            node.changeAttribute("color", bestColor);
-                            node.setAttribute("ui.style", "fill-color:rgb(" + bestColor + ");");
+                            changeColorOfNode(node);
 
                             makeNext = false;
-                            System.out.println(this.getName() + " end of :" + node.getId());
+                            // System.out.println(this.getName() + " end of :" + node.getId());
                         } finally {
                             lock.unlock();
                         }
@@ -274,6 +295,23 @@ class Ex2Entity extends Thread{
             System.out.println("End of thread: " + this.getName());
             
     }
+
+    private synchronized String getColorOfNode(Node currNode) {
+        synchronized(graph){
+            return currNode.getAttribute("color");
+        }
+    }
+
+    private synchronized void changeColorOfNode(Node currNode) {
+        synchronized(graph){
+        currNode.setAttribute("color", bestColor);
+        currNode.setAttribute("ui.style", "fill-color: rgb(" + bestColor
+                + ");shape: box;size:" + Lab4.boxSize
+                + "px; stroke-mode: plain; stroke-width:1px; stroke-color:#000000;");
+        }
+    }
+
+
     /**
      * allow thread to make next thing
      */
