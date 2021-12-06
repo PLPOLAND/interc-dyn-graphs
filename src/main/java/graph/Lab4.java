@@ -38,7 +38,7 @@ public class Lab4 {
         random = new Random(System.currentTimeMillis());
 
         // ex1(100,0.1);
-        ex2(15,8*15,20,100);
+        ex2(15,8*15,15,100);
         
     }
 
@@ -94,10 +94,10 @@ public class Lab4 {
         System.out.println("Killing Nodes:");
         System.out.flush();
         for (Ex2Entity ex2Entity : entity) {
-            ex2Entity.kill = true;
+            ex2Entity.endWork = true;
         }
-        Tools.pause(1000);
-        System.out.println("Consensus Approched after"+ iteration+" iterations");
+        Tools.pause(1000);//wait for thread's to end work
+        System.out.println("Consensus Approched after: "+ iteration+" iterations");
     }
 
     //GAME_OF_LIFE
@@ -187,7 +187,7 @@ public class Lab4 {
  * ex2 thread entity 
  */
 class Ex2Entity extends Thread{
-    boolean kill = false;
+    boolean endWork = false;
 
     boolean makeNext = false;
 
@@ -211,7 +211,7 @@ class Ex2Entity extends Thread{
 
 
     public void run(){
-        while (!kill) {
+        while (!endWork) {
             try {
                 Tools.pause(Lab4.sleepTime);
                 // System.out.println("!kill");
@@ -289,7 +289,7 @@ class Ex2Entity extends Thread{
                 // }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    kill = true;
+                    endWork = true;
                 }
             }
             System.out.println("End of thread: " + this.getName());
@@ -323,6 +323,6 @@ class Ex2Entity extends Thread{
      * stopping thread
      */
     public void killThread(){
-        kill = true;
+        endWork = true;
     }
 }
