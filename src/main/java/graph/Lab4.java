@@ -21,9 +21,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+
+/**
+ * Class with implements of ex from lab4
+ */
 public class Lab4 {
     SingleGraph myGraph;
-    Random random;
+    static public Random random;
     static int boxSize = 10;
     static int sleepTime = 10;
 
@@ -31,17 +35,27 @@ public class Lab4 {
 
     public Lab4(String[] args) {
 
-        // random = new Random(1);
+        // random = new Random(1321);
         random = new Random(System.currentTimeMillis());
 
         // ex1(100,0.1);
         // ex2(15,8*15,15,100);
-        // ex2(15,1,15,10);
-        ex2_multirun(15, 3, 20, 10, 3);
+        // ex2(30,100,15,50, true);
+        ex2_multirun(20, 100, 20, 100, 10, true);
 
     }
+    /**
+     * 
+     * @param n size of grid (N x N)
+     * @param threads how many threads should be run
+     * @param _boxSize size of the node
+     * @param _sleepTime waiting time between next threds executions
+     * @return number of iterations needed to aproch Consensus
+     */
+    private int ex2(int n, int threads, int _boxSize, int _sleepTime, boolean moore) {
 
-    private void ex2(int n, int threads, int _boxSize, int _sleepTime) {
+        Random random = new Random(System.currentTimeMillis());
+        // Random random = new Random(1321);
         SingleGraph myGraph = null;
         boxSize = _boxSize;
         sleepTime = _sleepTime;
@@ -54,7 +68,7 @@ public class Lab4 {
             int g = random.nextInt(255);
             int b = random.nextInt(255);
 
-            while (0.2126 * r + 0.7152 * g + 0.0722 * b > 220) {
+            while (0.2126 * r + 0.7152 * g + 0.0722 * b > 200) {//to make colors darker
                 r = random.nextInt(255);
                 g = random.nextInt(255);
                 b = random.nextInt(255);
@@ -66,13 +80,14 @@ public class Lab4 {
                 edge.addAttribute("ui.style", "fill-color: rgb(255,255,255);");
             }
         }
-        for (int i = 0; i < threads; i++)
-            entity[i] = new Ex2Entity(myGraph);
 
         boolean isConsensus = false;
         String consensusColor = "";
 
-        if (threads == 1) {
+        if (threads == 1) {//if 1 thread than print statistics for run (for gnuplot)
+            for (int i = 0; i < threads; i++)
+                entity[i] = new Ex2Entity(myGraph, true);//use local thread variable to store iterations
+            
             int maxColorsNumber = 0;
             GnuplotPrint print = new GnuplotPrint("iterations.txt");
             print.printHeader("");
@@ -90,15 +105,29 @@ public class Lab4 {
                 }
                 HashMap<String, Integer> colorsOnTheGrid = countCollors(myGraph);
                 maxColorsNumber = Integer.max(maxColorsNumber, colorsOnTheGrid.size());
-                // System.out.println(colorsOnTheGrid.toString());//debug
-                print.printLine(iteration, colorsOnTheGrid.size());
+
+                // System.out.println(colorsOnTheGrid.toString());//debug print colors in grid
+
+                print.printLine(entity[0].iterations, colorsOnTheGrid.size());//save statistic to file
             }
             // consensus made
-            print.close();
-            print.createPLT(iteration, maxColorsNumber);
-            System.out.println("Consensus Approched after: " + iteration + " iterations");
+            print.close();//close file
+            print.createPLT(entity[0].iterations, maxColorsNumber);//rewrite the gnuplot file
+            System.out.println("Consensus approched after: " + entity[0].iterations + " iterations");
+            int tmp = entity[0].iterations;
+            entity[0].stopThread();
 
+            for (Ex2Entity ex2Entity : entity) {
+                try {
+                    ex2Entity.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            return tmp;
         } else {
+            for (int i = 0; i < threads; i++)
+                entity[i] = new Ex2Entity(myGraph, false);
             // Tools.pause(1000);
             for (Ex2Entity ex2Entity : entity) {
                 ex2Entity.start();
@@ -116,28 +145,44 @@ public class Lab4 {
                     }
                 }
             }
-            System.out.println("Killing Nodes:");
+            System.out.println("Killing Nodes");
             System.out.flush();
             for (Ex2Entity ex2Entity : entity) {
-                ex2Entity.endWork = true;
+                ex2Entity.stopThread();
             }
-            Tools.pause(1000);// wait for thread's to end work
-            System.out.println("Consensus Approched after: " + iteration + " iterations");
+            for (Ex2Entity ex2Entity : entity) {
+                try {
+                    ex2Entity.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("Consensus approched after: " + iteration + " iterations");
+            return iteration;
         }
 
     }
-
-    public void ex2_multirun(int n, int threads, int _boxSize, int _sleepTime, int multiruns) {
+    
+    /**
+     * Runs ex2 multiple times for calculate average number of iterations
+     * 
+     * @param n             size of grid (N x N)
+     * @param threads       how many threads should be run
+     * @param _boxSize      size of the node
+     * @param _sleepTime    waiting time between next threds executions
+     * @param multiruns     how many runs will be done
+     * @param moore         
+     */
+    public void ex2_multirun(int n, int _threads, int _boxSize, int _sleepTime, int multiruns, boolean moore) {
         int sum = 0;
         int executions = 0;
         for (int i = 0; i < multiruns; i++) {
-            System.out.println("run number: " + i + "/" + multiruns);
-            ex2(n, 1, _boxSize, _sleepTime);
-            sum += iteration;
+            System.out.println("Runing run: " + i);
+            sum += ex2(n, _threads, _boxSize, _sleepTime,moore);
             executions++;
-
-            iteration = 0;
+            Lab4.iteration =0;
         }
+        
         System.out.println("Consensus reached on average in " + (sum / executions) + " iterations");
 
     }
@@ -262,33 +307,42 @@ class Ex2Entity extends Thread {
     HashMap<String, Integer> colors;
 
     ReentrantLock lock = new ReentrantLock();
-    ReentrantLock lock2 = new ReentrantLock();
 
     String bestColor = "";
     int bestColorVal = 0;
 
+    boolean useLocalIteration = false;
+    int iterations = 0;
+
     Random rand = new Random(System.currentTimeMillis());
 
-    Ex2Entity(SingleGraph graph2) {
+    Ex2Entity(SingleGraph graph2, boolean _useLocalIteration) {
         super();
         graph = graph2;
-
+        this.useLocalIteration = _useLocalIteration;
     }
 
     public void run() {
         while (!endWork) {
             proceedConsensus();
         }
-        System.out.println("End of thread: " + this.getName());
-        System.out.flush();
+        // System.out.println("End of thread: " + this.getName());
+        // System.out.flush();
     }
-
+    /**
+     * finds consensus for one node and it's neighbor
+     */
     public void proceedConsensus() {
         try {
             Tools.pause(Lab4.sleepTime);
             // System.out.println("!kill");
-            synchronized (Lab4.iteration) {
-                Lab4.iteration++;
+            if (useLocalIteration == true) {
+                iterations++;
+            }
+            else{
+                synchronized (Lab4.iteration) {
+                    Lab4.iteration++;
+                }
             }
             bestColor = "";
             bestColorVal = 0;
@@ -378,7 +432,7 @@ class Ex2Entity extends Thread {
     /**
      * stopping thread
      */
-    public void killThread() {
+    public void stopThread() {
         endWork = true;
     }
 }
