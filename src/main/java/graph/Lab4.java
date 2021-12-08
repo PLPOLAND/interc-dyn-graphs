@@ -44,6 +44,12 @@ public class Lab4 {
         ex2_multirun(20, 100, 20, 100, 10, true);
 
     }
+
+
+    private int ex2(int n, int threads, int _boxSize, int _sleepTime, boolean moore) {
+        return ex2(n, threads, _boxSize, _sleepTime, moore,"","graph");
+    }
+
     /**
      * 
      * @param n size of grid (N x N)
@@ -52,7 +58,7 @@ public class Lab4 {
      * @param _sleepTime waiting time between next threds executions
      * @return number of iterations needed to aproch Consensus
      */
-    private int ex2(int n, int threads, int _boxSize, int _sleepTime, boolean moore) {
+    private int ex2(int n, int threads, int _boxSize, int _sleepTime, boolean moore, String postFix, String graphName) {
 
         Random random = new Random(System.currentTimeMillis());
         // Random random = new Random(1321);
@@ -61,7 +67,7 @@ public class Lab4 {
         sleepTime = _sleepTime;
         Ex2Entity entity[] = new Ex2Entity[threads];
 
-        myGraph = Tools.grid(n, true, false);
+        myGraph = Tools.grid(n, true, false, postFix,graphName);
         myGraph.display(false);
         for (Node node : myGraph.getEachNode()) {
             int r = random.nextInt(255);
@@ -126,8 +132,10 @@ public class Lab4 {
             }
             return tmp;
         } else {
-            for (int i = 0; i < threads; i++)
+            for (int i = 0; i < threads; i++){
                 entity[i] = new Ex2Entity(myGraph, false);
+                Tools.pause(10);
+            }
             // Tools.pause(1000);
             for (Ex2Entity ex2Entity : entity) {
                 ex2Entity.start();
@@ -176,6 +184,39 @@ public class Lab4 {
     public void ex2_multirun(int n, int _threads, int _boxSize, int _sleepTime, int multiruns, boolean moore) {
         int sum = 0;
         int executions = 0;
+
+        //NOT WORKING, JUST ONE GRAPH WINDOW IS UPDATED :(
+        // int [] iterations = new int [multiruns];
+        // Thread[] threads = new Thread[_threads];
+        // for (int i = 0; i < iterations.length; i++) {
+        //     for (int j = 0; j < threads.length; j++) {
+        //         if(i<iterations.length){
+        //             threads[j]= new Thread(""+j){
+        //                 public void run() {
+        //                     int tmp = ex2(n,10,_boxSize,_sleepTime,true,this.getName(),this.getName());
+        //                     synchronized(iterations){
+        //                         iterations[Integer.parseInt(this.getName())] = tmp;
+        //                     }
+        //                 };
+        //             };
+        //             threads[j].start();
+        //         }
+        //         i++;
+        //     }
+        //     for (int j2 = 0; j2 < threads.length; j2++) {
+        //         if(threads[j2] !=null){
+        //             try {
+        //                 threads[j2].join();
+        //             } catch (InterruptedException e) {
+        //                 e.printStackTrace();
+        //             }
+        //             threads[j2] = null;
+        //         }
+        //     }
+        // }
+
+
+
         for (int i = 0; i < multiruns; i++) {
             System.out.println("Runing run: " + i);
             sum += ex2(n, _threads, _boxSize, _sleepTime,moore);
@@ -320,6 +361,7 @@ class Ex2Entity extends Thread {
         super();
         graph = graph2;
         this.useLocalIteration = _useLocalIteration;
+        this.setName(""+rand.nextInt());
     }
 
     public void run() {

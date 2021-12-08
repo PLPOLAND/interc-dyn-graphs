@@ -12,6 +12,12 @@ public class Tools {
 
 	// =============== GENERATORS ==================
 
+
+	public static SingleGraph grid(int n, boolean moore, boolean torus) {
+		return grid(n, moore, torus,"", "") ;
+	}
+
+
 	/**
 	 * Grid generator with VonNeumann neighborhood
 	 * --> every vertex non located on the border will have exactly
@@ -22,12 +28,12 @@ public class Tools {
 	 * 
 	 * @param n
 	 */
-	public static SingleGraph grid(int n, boolean moore, boolean torus) {
-		SingleGraph myGraph = new SingleGraph("grid von Neumann or Moore");
+	public static SingleGraph grid(int n, boolean moore, boolean torus,String postfix, String graphName) {
+		SingleGraph myGraph = new SingleGraph("grid von Neumann or Moore "+graphName);
 		// creation of nodes
 		for (int line = 0; line < n; line++) {
 			for (int col = 0; col < n; col++) {
-				Node v = myGraph.addNode(line + "-" + col);
+				Node v = myGraph.addNode(line + "-" + col+postfix);
 				v.addAttribute("x", col);
 				v.addAttribute("y", line);
 			}
@@ -39,18 +45,18 @@ public class Tools {
 		for (int line = 0; line < n; line++) {
 			for (int col = 0; col < n - val; col++) {
 				int colplusone = (col + 1) % n;
-				Node v = myGraph.getNode(line + "-" + col);
-				Node w = myGraph.getNode(line + "-" + colplusone);
-				Edge e = myGraph.addEdge(v.getId() + "_" + w.getId(), v.getId(), w.getId());
+				Node v = myGraph.getNode(line + "-" + col+postfix);
+				Node w = myGraph.getNode(line + "-" + colplusone+postfix);
+				Edge e = myGraph.addEdge(v.getId()+ "_" + w.getId()+postfix, v.getId(), w.getId());
 			}
 		}
 
 		for (int col = 0; col < n; col++) {
 			for (int line = 0; line < n - val; line++) {
 				int lineplusone = (line + 1) % n;
-				Node v = myGraph.getNode(line + "-" + col);
-				Node w = myGraph.getNode(lineplusone + "-" + col);
-				Edge e = myGraph.addEdge(v.getId() + "_" + w.getId(), v.getId(), w.getId());
+				Node v = myGraph.getNode(line + "-" + col+postfix);
+				Node w = myGraph.getNode(lineplusone + "-" + col+postfix);
+				Edge e = myGraph.addEdge(v.getId() + "_" + w.getId()+postfix, v.getId(), w.getId());
 			}
 		}
 		if (moore) {
@@ -60,18 +66,18 @@ public class Tools {
 				for (int col = 0; col < n - val; col++) {
 					int colplusone = (col + 1) % n;
 					int lineplusone = (line + 1) % n;
-					Node v = myGraph.getNode(line + "-" + col);
-					Node w = myGraph.getNode(lineplusone + "-" + colplusone);
-					Edge e = myGraph.addEdge(v.getId() + "_" + w.getId(), v.getId(), w.getId());
+					Node v = myGraph.getNode(line + "-" + col+postfix);
+					Node w = myGraph.getNode(lineplusone + "-" + colplusone+postfix);
+					Edge e = myGraph.addEdge(v.getId() + "_" + w.getId()+postfix, v.getId(), w.getId());
 				}
 			}
 			for (int line = val; line < n; line++) {
 				for (int col = 0; col < n - val; col++) {
 					int colplusone = (col + 1) % n;
 					int lineminusone = (n + line - 1) % n;
-					Node v = myGraph.getNode(line + "-" + col);
-					Node w = myGraph.getNode(lineminusone + "-" + colplusone);
-					Edge e = myGraph.addEdge(v.getId() + "_" + w.getId(), v.getId(), w.getId());
+					Node v = myGraph.getNode(line + "-" + col+postfix);
+					Node w = myGraph.getNode(lineminusone + "-" + colplusone + postfix);
+					Edge e = myGraph.addEdge(v.getId() + "_" + w.getId()+postfix, v.getId(), w.getId());
 				}
 			}
 		}
